@@ -1,17 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTaskDto, UpdateTaskDto } from './dto';
-
-let currentId = 1;
+import { v4 as uuidv4 } from 'uuid';
 
 export interface Task {
-  id: number;
+  id: string;
   title: string;
   completed: boolean;
 }
 
 @Injectable()
 export class TasksService {
-  private tasks: Task[] = [{ id: 1, title: 'Sample Task', completed: false }];
+  private tasks: Task[] = [
+    { id: uuidv4(), title: 'Sample Task', completed: false },
+  ];
 
   findAll() {
     return this.tasks;
@@ -19,7 +20,7 @@ export class TasksService {
 
   create(dto: CreateTaskDto) {
     const task = {
-      id: currentId++,
+      id: uuidv4(),
       title: dto.title,
       completed: dto.completed ?? false,
     };
@@ -27,20 +28,20 @@ export class TasksService {
     return task;
   }
 
-  update(id: number, dto: UpdateTaskDto) {
+  update(id: string, dto: UpdateTaskDto) {
     const task = this.tasks.find((t) => t.id === id);
     if (!task) throw new NotFoundException('Task not found');
     Object.assign(task, dto);
     return task;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     const index = this.tasks.findIndex((t) => t.id === id);
     if (index === -1) throw new NotFoundException('Task not found');
     this.tasks.splice(index, 1);
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     const task = this.tasks.find((t) => t.id === id);
     if (!task) throw new NotFoundException('Task not found');
     return task;
