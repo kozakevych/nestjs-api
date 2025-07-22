@@ -2,19 +2,20 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  Inject,
 } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
+import { AppService } from '../app.service';
 
 const users: { username: string; password: string }[] = [];
 
-const secretKey = crypto.randomBytes(32).toString('hex');
-
 @Injectable()
 export class AuthService {
+  constructor(@Inject(AppService) public readonly appService: AppService) {}
+
   async register(dto: RegisterDto) {
     if (users.find((u) => u.username === dto.username)) {
       throw new ConflictException('Username already exists');
@@ -32,9 +33,13 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(dto.password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const token = jwt.sign({ username: user.username }, secretKey, {
-      expiresIn: '1h',
-    });
+    const token = jwt.sign(
+      { username: user.username },
+      this.appService.secretKey,
+      {
+        expiresIn: '1h',
+      },
+    );
     return { access_token: token };
   }
 }
